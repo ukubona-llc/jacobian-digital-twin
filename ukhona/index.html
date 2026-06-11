@@ -1,285 +1,1149 @@
-
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ukubona LLC — Enterprise Digital Twin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font-sans); }
-  .twin { padding: 1rem; }
-  .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-  .hdr-left { display: flex; flex-direction: column; gap: 2px; }
-  .eyebrow { font-size: 11px; letter-spacing: .1em; color: var(--color-text-secondary); text-transform: uppercase; }
-  .title-main { font-size: 17px; font-weight: 500; color: var(--color-text-primary); }
-  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #3a9; display: inline-block; animation: pulse 1.6s infinite; margin-right: 6px; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .live-badge { font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); padding-bottom: 0; }
-  .tab { padding: 6px 14px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  .tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
-  .panel { display: none; }
-  .panel.active { display: block; }
-  .metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1rem; }
-  .metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: .75rem 1rem; }
-  .mc-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
-  .mc-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
-  .mc-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
-  .event-stream { height: 320px; overflow-y: auto; font-size: 12px; font-family: var(--font-mono); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px; }
-  .event-line { padding: 3px 0; border-bottom: 0.5px solid var(--color-border-tertiary); display: grid; grid-template-columns: 72px 60px 80px 110px 1fr; gap: 6px; align-items: center; }
-  .event-line:last-child { border-bottom: none; }
-  .ev-time { color: var(--color-text-tertiary); }
-  .layer-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 500; text-align: center; }
-  .L1 { background: #EEEDFE; color: #3C3489; }
-  .L2 { background: #E1F5EE; color: #085041; }
-  .L3 { background: #FAEEDA; color: #633806; }
-  .L4 { background: #FAECE7; color: #712B13; }
-  .L5 { background: #E6F1FB; color: #0C447C; }
-  .ev-agent { color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ev-type { color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
-  .ev-payload { color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .stream-header { display: grid; grid-template-columns: 72px 60px 80px 110px 1fr; gap: 6px; padding: 4px 0 6px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 4px; font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .box { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; background: var(--color-background-primary); }
-  .box-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .07em; }
-  .heatmap-grid { display: grid; gap: 2px; }
-  .hm-row { display: flex; gap: 2px; align-items: center; }
-  .hm-label { font-size: 10px; color: var(--color-text-secondary); width: 72px; text-align: right; padding-right: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hm-cell { width: 20px; height: 20px; border-radius: 2px; flex-shrink: 0; }
-  .hm-col-labels { display: flex; gap: 2px; margin-left: 78px; margin-bottom: 2px; }
-  .hm-col-label { font-size: 9px; color: var(--color-text-secondary); width: 20px; text-align: center; overflow: hidden; writing-mode: vertical-rl; height: 48px; text-overflow: ellipsis; }
-  .reg-controls { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-  .reg-controls label { font-size: 13px; color: var(--color-text-secondary); }
-  .reg-controls select { font-size: 13px; padding: 4px 8px; }
-  .reg-table { width: 100%; font-size: 12px; border-collapse: collapse; }
-  .reg-table th { text-align: left; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); padding: 6px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-  .reg-table td { padding: 5px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
-  .coef-bar-wrap { width: 80px; height: 12px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
-  .coef-bar { height: 100%; border-radius: 2px; }
-  .pos { background: #3a9; }
-  .neg { background: #e66; }
-  .sig { font-size: 11px; color: var(--color-text-secondary); }
-  .eigenmode-list { margin-top: 8px; }
-  .eigen-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .eigen-num { font-size: 13px; font-weight: 500; color: var(--color-text-primary); min-width: 32px; }
-  .eigen-bar-wrap { flex: 1; height: 10px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
-  .eigen-bar { height: 100%; border-radius: 2px; background: #5b7; }
-  .eigen-pct { font-size: 11px; color: var(--color-text-secondary); min-width: 36px; text-align: right; }
-  .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; max-height: 360px; overflow-y: auto; }
-  .agent-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 8px 10px; font-size: 12px; }
-  .agent-name { font-weight: 500; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .agent-role { color: var(--color-text-secondary); font-size: 11px; margin: 1px 0; }
-  .agent-omega { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-tertiary); }
-  .tier-badge { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-bottom: 3px; font-weight: 500; }
-  .t1 { background: #EEEDFE; color: #3C3489; }
-  .t2 { background: #E1F5EE; color: #085041; }
-  .t3 { background: #FAEEDA; color: #633806; }
-  .t4 { background: #FAECE7; color: #712B13; }
-  .t5 { background: #E6F1FB; color: #0C447C; }
-  .t6 { background: #F1EFE8; color: #444441; }
-  .filter-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
-  .filter-row label { font-size: 12px; color: var(--color-text-secondary); }
+/* ── THEME TOKENS ─────────────────────────────────────────── */
+:root {
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --transition: 0.18s ease;
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --page-max: 1100px;
+  --page-pad: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+[data-theme="dark"] {
+  --bg:          #0e0f11;
+  --bg-2:        #161820;
+  --bg-3:        #1e2028;
+  --surface:     #1e2028;
+  --surface-2:   #252831;
+  --border:      rgba(255,255,255,0.08);
+  --border-2:    rgba(255,255,255,0.14);
+  --text:        #e4e4e0;
+  --text-2:      #a1a1a8;
+  --text-3:      #6b7280;
+  --accent:      #4ade80;
+  --accent-dim:  #1a2e1f;
+  --accent-text: #86efac;
+  --red:         #f87171;
+  --amber:       #fbbf24;
+  --blue:        #60a5fa;
+  --ticker-bg:   #0a1f12;
+}
+
+[data-theme="light"] {
+  --bg:          #f4f4f1;
+  --bg-2:        #ffffff;
+  --bg-3:        #f0f0ed;
+  --surface:     #ffffff;
+  --surface-2:   #f7f7f5;
+  --border:      rgba(0,0,0,0.08);
+  --border-2:    rgba(0,0,0,0.14);
+  --text:        #18181b;
+  --text-2:      #52525b;
+  --text-3:      #a1a1aa;
+  --accent:      #16a34a;
+  --accent-dim:  #dcfce7;
+  --accent-text: #15803d;
+  --red:         #dc2626;
+  --amber:       #d97706;
+  --blue:        #2563eb;
+  --ticker-bg:   #f0fdf4;
+}
+
+/* ── RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── LAYOUT SHELL ─────────────────────────────────────────── */
+.page-shell {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+}
+
+/* ── LIVE TICKER ──────────────────────────────────────────── */
+.ticker-bar {
+  background: var(--ticker-bg);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: background var(--transition);
+}
+
+.ticker-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0 14px;
+  white-space: nowrap;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ticker-scroll {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.ticker-inner {
+  display: flex;
+  gap: 48px;
+  white-space: nowrap;
+  animation: ticker-scroll 28s linear infinite;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  align-items: center;
+  height: 34px;
+}
+
+.ticker-item { display: flex; gap: 8px; align-items: center; }
+.ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.site-header {
+  padding: 2.5rem 0 1.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.brand-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-name::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 26px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.75); }
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-2);
+}
+
+/* ── METRICS STRIP ────────────────────────────────────────── */
+.metrics-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 1.75rem 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.metric-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.metric-sub {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+/* ── TABS ─────────────────────────────────────────────────── */
+.tabs-row {
+  display: flex;
+  gap: 4px;
+  padding: 1.5rem 0 0;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.01em;
+}
+
+.tab-btn:hover {
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-color: var(--border-2);
+}
+
+.tab-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ── MAIN CONTENT AREA ────────────────────────────────────── */
+.main-content {
+  padding: 1.5rem 0 0;
+}
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── EVENT STREAM ─────────────────────────────────────────── */
+.stream-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.stream-header-row {
+  display: grid;
+  grid-template-columns: 70px 54px 90px 120px 1fr;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.stream-body {
+  height: 380px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.stream-body::-webkit-scrollbar { width: 4px; }
+.stream-body::-webkit-scrollbar-track { background: transparent; }
+.stream-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+.ev-row {
+  display: grid;
+  grid-template-columns: 70px 54px 90px 120px 1fr;
+  gap: 10px;
+  padding: 5px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.ev-row:last-child { border-bottom: none; }
+.ev-row:hover { background: var(--surface-2); }
+.ev-row.fresh { animation: flash-in 0.4s ease; }
+
+@keyframes flash-in {
+  from { background: var(--accent-dim); }
+  to   { background: transparent; }
+}
+
+.ev-time  { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.ev-agent { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-etype { font-size: 10px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-payload { font-family: var(--font-mono); font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.layer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+}
+
+.lp-L1 { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.lp-L2 { background: rgba(74,222,128,0.12); color: #4ade80; }
+.lp-L3 { background: rgba(251,191,36,0.12); color: #fbbf24; }
+.lp-L4 { background: rgba(248,113,113,0.12); color: #f87171; }
+.lp-L5 { background: rgba(167,139,250,0.12); color: #a78bfa; }
+
+/* ── TWO-COL LAYOUT FOR JACOBIAN ──────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.box-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
+
+/* ── HEATMAP ──────────────────────────────────────────────── */
+.hm-col-headers {
+  display: flex;
+  gap: 2px;
+  margin-left: 108px;
+  margin-bottom: 4px;
+}
+
+.hm-col-hdr {
+  width: 22px;
+  font-size: 9px;
+  color: var(--text-3);
+  text-align: center;
+  writing-mode: vertical-rl;
+  height: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.hm-row-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.hm-row-label {
+  width: 104px;
+  font-size: 10px;
+  color: var(--text-2);
+  text-align: right;
+  padding-right: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.hm-cell {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  cursor: default;
+}
+
+.hm-cell:hover { transform: scale(1.35); z-index: 2; position: relative; }
+
+/* ── EIGENMODES ────────────────────────────────────────────── */
+.eigen-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.eigen-row:last-child { border-bottom: none; }
+
+.eigen-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.eigen-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.eigen-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.6s ease;
+}
+
+.eigen-pct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── CONDITION NUMBERS ─────────────────────────────────────── */
+.cond-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.cond-label {
+  font-size: 10px;
+  color: var(--text-3);
+  width: 70px;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+.cond-track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cond-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.cond-ok   { background: var(--accent); }
+.cond-warn { background: var(--amber); }
+.cond-bad  { background: var(--red); }
+
+.cond-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── REGRESSION ────────────────────────────────────────────── */
+.reg-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.reg-controls label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.reg-controls select {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.reg-controls select:hover { border-color: var(--accent); }
+
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 14px;
+  height: 190px;
+  position: relative;
+}
+
+.reg-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.reg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.reg-table thead th {
+  padding: 9px 14px;
+  background: var(--bg-3);
+  color: var(--text-3);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.reg-table tbody td {
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.reg-table tbody tr:last-child td { border-bottom: none; }
+.reg-table tbody tr:hover td { background: var(--surface-2); }
+
+.coef-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coef-num { font-family: var(--font-mono); font-size: 11px; min-width: 54px; }
+.coef-track { width: 64px; height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; }
+.coef-fill { height: 100%; border-radius: 3px; }
+.coef-pos { background: var(--accent); }
+.coef-neg { background: var(--red); }
+
+.sig-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.sig-hi  { background: rgba(74,222,128,0.12); color: #4ade80; }
+.sig-med { background: rgba(251,191,36,0.12);  color: #fbbf24; }
+.sig-lo  { background: var(--bg-3); color: var(--text-3); }
+
+/* ── AGENT LEDGER ──────────────────────────────────────────── */
+.agent-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.agent-filters label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.agent-filters select {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.agent-filters select:hover { border-color: var(--accent); }
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  gap: 8px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.agent-grid::-webkit-scrollbar { width: 4px; }
+.agent-grid::-webkit-scrollbar-track { background: transparent; }
+.agent-grid::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+.agent-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.agent-card:hover {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.agent-tier-badge {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  margin-bottom: 5px;
+  letter-spacing: 0.05em;
+}
+
+.t1 { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.t2 { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+.t3 { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+.t4 { background: rgba(74,222,128,0.15);  color: #4ade80; }
+.t5 { background: rgba(248,113,113,0.15); color: #f87171; }
+.t6 { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.tM { background: rgba(96,165,250,0.10);  color: #60a5fa; }
+.tV { background: rgba(251,191,36,0.10);  color: #fbbf24; }
+
+.agent-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-role {
+  font-size: 11px;
+  color: var(--text-3);
+  margin: 2px 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.agent-omega-bar {
+  margin-top: 6px;
+  height: 3px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.agent-omega-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+/* ── FOOTER ────────────────────────────────────────────────── */
+.site-footer {
+  margin-top: 3rem;
+  padding: 1.75rem 0 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.footer-brand {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.footer-formula {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.footer-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.footer-stat-val {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.footer-stat-label {
+  font-size: 9px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.footer-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-2);
+}
+
+/* ── RESPONSIVE ────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .metrics-strip { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .stream-header-row,
+  .ev-row { grid-template-columns: 60px 50px 1fr; }
+  .stream-header-row > *:nth-child(n+4),
+  .ev-row > *:nth-child(n+4) { display: none; }
+  .site-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 400px) {
+  .metrics-strip { grid-template-columns: 1fr; }
+}
 </style>
+</head>
+<body>
 
-<div class="twin">
-  <div class="hdr">
-    <div class="hdr-left">
-      <span class="eyebrow">Ukubona LLC — Enterprise State Manifold</span>
-      <span class="title-main">Digital Twin · State_t = Σ Events_i</span>
+<!-- ── LIVE TICKER ──────────────────────────────────────────── -->
+<div class="ticker-bar" aria-hidden="true">
+  <span class="ticker-label">θᵗ live</span>
+  <div class="ticker-scroll">
+    <div class="ticker-inner" id="ticker-inner">
+      <!-- populated by JS -->
     </div>
-    <span class="live-badge"><span class="pulse-dot"></span><span id="event-counter">0</span> events · θᵗ live</span>
-  </div>
-
-  <div class="metrics-row" id="metrics-row">
-    <div class="metric-card"><div class="mc-label">Total Events</div><div class="mc-val" id="m-total">0</div><div class="mc-sub">since boot</div></div>
-    <div class="metric-card"><div class="mc-label">Active Agents</div><div class="mc-val" id="m-agents">72</div><div class="mc-sub">human + machine</div></div>
-    <div class="metric-card"><div class="mc-label">FX Rate (UGX)</div><div class="mc-val" id="m-fx">3,720</div><div class="mc-sub">USD/UGX live</div></div>
-    <div class="metric-card"><div class="mc-label">Fleet Health</div><div class="mc-val" id="m-fleet">97%</div><div class="mc-sub">M_001–M_030</div></div>
-    <div class="metric-card"><div class="mc-label">ε_FGT Error</div><div class="mc-val" id="m-fgt">0.042</div><div class="mc-sub">eigenmode Δ</div></div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('stream')">Event stream</button>
-    <button class="tab" onclick="switchTab('jacobian')">Jacobian heatmap</button>
-    <button class="tab" onclick="switchTab('regression')">Regression panel</button>
-    <button class="tab" onclick="switchTab('agents')">Agent ledger</button>
-  </div>
-
-  <div id="tab-stream" class="panel active">
-    <div class="stream-header"><span>Time</span><span>Layer</span><span>Agent</span><span>Type</span><span>Payload</span></div>
-    <div class="event-stream" id="event-stream"></div>
-  </div>
-
-  <div id="tab-jacobian" class="panel">
-    <div class="two-col">
-      <div class="box">
-        <div class="box-label">Jacobian sensitivity · ∂outcome/∂signal</div>
-        <div id="heatmap-container"></div>
-      </div>
-      <div class="box">
-        <div class="box-label">Eigenmode decomposition</div>
-        <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:8px;">Variance explained by principal components of Σ Jacobian</div>
-        <div class="eigenmode-list" id="eigenmode-list"></div>
-        <div style="margin-top:14px; font-size:12px; color:var(--color-text-secondary);">
-          <div style="margin-bottom:6px; font-weight:500; color:var(--color-text-primary);">Layer condition numbers</div>
-          <div id="condition-numbers"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="tab-regression" class="panel">
-    <div class="reg-controls">
-      <label>Outcome variable:</label>
-      <select id="outcome-select" onchange="updateRegression()">
-        <option value="equity">Equity valuation ($M)</option>
-        <option value="fx">FX rate USD/UGX</option>
-        <option value="fleet">Fleet health %</option>
-        <option value="throughput">Throughput index</option>
-        <option value="fgt_error">ε_FGT prediction error</option>
-      </select>
-      <label style="margin-left:8px;">Window:</label>
-      <select id="window-select" onchange="updateRegression()">
-        <option value="50">Last 50 events</option>
-        <option value="100">Last 100 events</option>
-        <option value="all">All events</option>
-      </select>
-    </div>
-    <div style="margin-bottom:12px; height:180px; position:relative;">
-      <canvas id="reg-chart" role="img" aria-label="Time series of selected outcome variable">Outcome variable over time.</canvas>
-    </div>
-    <div class="box">
-      <div class="box-label">Partial correlations with predictors</div>
-      <table class="reg-table" id="reg-table">
-        <thead><tr><th>Predictor signal</th><th>Layer</th><th>Agent</th><th>Coeff (β)</th><th>|r|</th><th>Significance</th></tr></thead>
-        <tbody id="reg-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="tab-agents" class="panel">
-    <div class="filter-row">
-      <label>Tier:</label>
-      <select id="tier-filter" onchange="filterAgents()">
-        <option value="all">All tiers</option>
-        <option value="1">T1 Executive</option>
-        <option value="2">T2 VP</option>
-        <option value="3">T3 Manager</option>
-        <option value="4">T4 Analyst</option>
-        <option value="5">T5 Frontline</option>
-        <option value="6">T6 Intern</option>
-        <option value="M">Machines</option>
-      </select>
-      <label>Type:</label>
-      <select id="type-filter" onchange="filterAgents()">
-        <option value="all">All types</option>
-        <option value="human">Human</option>
-        <option value="machine">Machine</option>
-        <option value="vendor">Vendor</option>
-      </select>
-    </div>
-    <div class="agent-grid" id="agent-grid"></div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- ── PAGE SHELL ───────────────────────────────────────────── -->
+<div class="page-shell">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-eyebrow">Ukubona LLC · Kampala</span>
+      <h1 class="brand-name">Enterprise Digital Twin</h1>
+      <span class="brand-sub">State_t = Σ Events_i &nbsp;·&nbsp; θᵗ → L₀+Σwᵢ·Lᵢ → f(σ²,λ,ε) → γ|ε_FGT|² → L(θᵗ⁺¹)</span>
+    </div>
+    <div class="header-right">
+      <div class="live-indicator">
+        <span class="live-dot"></span>
+        <span id="event-counter">0</span>&nbsp;events
+      </div>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle dark/light mode">
+        🌙
+      </button>
+    </div>
+  </header>
+
+  <!-- METRICS STRIP -->
+  <section class="metrics-strip" aria-label="Key metrics">
+    <div class="metric">
+      <span class="metric-label">Total Events</span>
+      <span class="metric-value" id="m-total">0</span>
+      <span class="metric-sub">since boot</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Active Agents</span>
+      <span class="metric-value">62</span>
+      <span class="metric-sub">human + machine</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">FX Rate</span>
+      <span class="metric-value" id="m-fx">3,720</span>
+      <span class="metric-sub">USD / UGX live</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">Fleet Health</span>
+      <span class="metric-value" id="m-fleet">97.0%</span>
+      <span class="metric-sub">M_001 – M_030</span>
+    </div>
+    <div class="metric">
+      <span class="metric-label">ε_FGT Error</span>
+      <span class="metric-value" id="m-fgt">0.042</span>
+      <span class="metric-sub">eigenmode Δ</span>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <nav class="tabs-row" role="tablist" aria-label="Dashboard panels">
+    <button class="tab-btn active" role="tab" aria-selected="true"  onclick="switchTab('stream')">Event stream</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" onclick="switchTab('jacobian')">Jacobian heatmap</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" onclick="switchTab('regression')">Regression panel</button>
+    <button class="tab-btn"        role="tab" aria-selected="false" onclick="switchTab('agents')">Agent ledger</button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ── STREAM PANEL ─────────────────────────────────────── -->
+    <section id="tab-stream" class="panel active" role="tabpanel">
+      <div class="stream-wrap">
+        <div class="stream-header-row">
+          <span>Time</span><span>Layer</span><span>Agent</span><span>Type</span><span>Payload</span>
+        </div>
+        <div class="stream-body" id="stream-body"></div>
+      </div>
+    </section>
+
+    <!-- ── JACOBIAN PANEL ───────────────────────────────────── -->
+    <section id="tab-jacobian" class="panel" role="tabpanel">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-title">Jacobian sensitivity · ∂outcome / ∂signal</div>
+          <div id="heatmap-col-headers" class="hm-col-headers"></div>
+          <div id="heatmap-rows"></div>
+        </div>
+        <div class="box">
+          <div class="box-title">Eigenmode decomposition</div>
+          <div id="eigenmode-list" style="margin-bottom:20px;"></div>
+          <div class="box-title" style="margin-top:4px;">Layer condition numbers</div>
+          <div id="condition-numbers"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REGRESSION PANEL ─────────────────────────────────── -->
+    <section id="tab-regression" class="panel" role="tabpanel">
+      <div class="reg-controls">
+        <label for="outcome-select">Outcome</label>
+        <select id="outcome-select" onchange="updateRegression()">
+          <option value="equity">Equity valuation ($M)</option>
+          <option value="fx">FX rate USD/UGX</option>
+          <option value="fleet">Fleet health %</option>
+          <option value="throughput">Throughput index</option>
+          <option value="fgt_error">ε_FGT prediction error</option>
+        </select>
+        <label for="window-select">Window</label>
+        <select id="window-select" onchange="updateRegression()">
+          <option value="60">Last 60 ticks</option>
+          <option value="120">Last 120 ticks</option>
+          <option value="all">All ticks</option>
+        </select>
+      </div>
+      <div class="chart-box">
+        <canvas id="reg-chart" role="img" aria-label="Time series of selected outcome variable">Outcome variable over time.</canvas>
+      </div>
+      <div class="reg-table-wrap">
+        <table class="reg-table" id="reg-table">
+          <thead>
+            <tr>
+              <th>Predictor signal</th>
+              <th>Layer</th>
+              <th>Agent / source</th>
+              <th>β coefficient</th>
+              <th>|r|</th>
+              <th>Sig.</th>
+            </tr>
+          </thead>
+          <tbody id="reg-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── AGENTS PANEL ─────────────────────────────────────── -->
+    <section id="tab-agents" class="panel" role="tabpanel">
+      <div class="agent-filters">
+        <label for="tier-filter">Tier</label>
+        <select id="tier-filter" onchange="filterAgents()">
+          <option value="all">All tiers</option>
+          <option value="1">T1 Executive</option>
+          <option value="2">T2 VP</option>
+          <option value="3">T3 Manager</option>
+          <option value="4">T4 Analyst</option>
+          <option value="5">T5 Frontline</option>
+          <option value="6">T6 Intern</option>
+          <option value="M">Machines</option>
+          <option value="V">Vendors</option>
+        </select>
+        <label for="type-filter">Type</label>
+        <select id="type-filter" onchange="filterAgents()">
+          <option value="all">All types</option>
+          <option value="human">Human</option>
+          <option value="machine">Machine</option>
+          <option value="vendor">Vendor / market</option>
+        </select>
+      </div>
+      <div class="agent-grid" id="agent-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-left">
+      <span class="footer-brand">Ukubona LLC · ukubona-llc.github.io</span>
+      <span class="footer-formula">θᵗ → [T] → [M] → [V] → A([E₁…Eₙ]) → [S] → θᵗ⁺¹</span>
+    </div>
+    <div class="footer-right">
+      <div class="footer-stat">
+        <span class="footer-stat-val" id="f-events">0</span>
+        <span class="footer-stat-label">events fired</span>
+      </div>
+      <div class="footer-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-val" id="f-agents">62</span>
+        <span class="footer-stat-label">agents</span>
+      </div>
+      <div class="footer-divider"></div>
+      <div class="footer-stat">
+        <span class="footer-stat-val" id="f-uptime">0s</span>
+        <span class="footer-stat-label">uptime</span>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page-shell -->
+
 <script>
+/* ══════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════ */
 const AGENTS = [
-  {id:'E_001',name:'Kato Mukasa',role:'CEO',tier:1,type:'human',clearance:10,omega:2,layer:'L5',dept:'Executive'},
-  {id:'E_002',name:'Sarah Achieng',role:'CHRO',tier:1,type:'human',clearance:9,omega:4,layer:'L5',dept:'HR'},
-  {id:'E_003',name:'James Musisi',role:'COO',tier:1,type:'human',clearance:9,omega:5,layer:'L5',dept:'Ops'},
-  {id:'E_004',name:'Elena Rostova',role:'CFO',tier:1,type:'human',clearance:9,omega:3,layer:'L5',dept:'Finance'},
-  {id:'E_005',name:'Robert Lwanga',role:'CCO',tier:1,type:'human',clearance:9,omega:6,layer:'L5',dept:'Compliance'},
-  {id:'E_006',name:'Marcus Vance',role:'VP Talent',tier:2,type:'human',clearance:8,omega:8,layer:'L4',dept:'HR'},
-  {id:'E_007',name:'Diana Katusiime',role:'VP Supply Chain',tier:2,type:'human',clearance:8,omega:10,layer:'L4',dept:'Ops'},
-  {id:'E_008',name:'Tariq Al-Mansoor',role:'VP Treasury',tier:2,type:'human',clearance:8,omega:7,layer:'L4',dept:'Finance'},
-  {id:'E_009',name:'Joan Okello',role:'VP Regulatory',tier:2,type:'human',clearance:8,omega:9,layer:'L4',dept:'Compliance'},
-  {id:'E_010',name:'Simon Peter Ojok',role:'VP Infrastructure',tier:2,type:'human',clearance:8,omega:12,layer:'L4',dept:'Infra'},
-  {id:'E_011',name:'Brenda Nsubuga',role:'HR Manager',tier:3,type:'human',clearance:6,omega:15,layer:'L3',dept:'HR'},
-  {id:'E_012',name:'David Cox',role:'HR Manager',tier:3,type:'human',clearance:6,omega:14,layer:'L3',dept:'HR'},
-  {id:'E_013',name:'Arthur Ssewankambo',role:'Asst HR Mgr',tier:3,type:'human',clearance:5,omega:22,layer:'L3',dept:'HR'},
-  {id:'E_014',name:'Rajesh Patel',role:'Dispatch Mgr',tier:3,type:'human',clearance:6,omega:45,layer:'L3',dept:'Ops'},
-  {id:'E_015',name:'Fiona Wall',role:'Logistics Lead',tier:3,type:'human',clearance:6,omega:38,layer:'L3',dept:'Ops'},
-  {id:'E_016',name:'Moses Bwambale',role:'Terminal Supv',tier:3,type:'human',clearance:6,omega:50,layer:'L3',dept:'Ops'},
-  {id:'E_017',name:'Grace Atim',role:'Asst Dispatcher',tier:3,type:'human',clearance:5,omega:65,layer:'L3',dept:'Ops'},
-  {id:'E_018',name:'Chloe Dupont',role:'Fleet Health Mgr',tier:3,type:'human',clearance:6,omega:40,layer:'L3',dept:'Ops'},
-  {id:'E_019',name:'Samuel Gyimah',role:'Billing Mgr',tier:3,type:'human',clearance:6,omega:20,layer:'L3',dept:'Finance'},
-  {id:'E_020',name:'Lin Wei',role:'Treasury Mgr',tier:3,type:'human',clearance:7,omega:18,layer:'L3',dept:'Finance'},
-  {id:'E_021',name:'Patricia Nabakooza',role:'Accounts Asst',tier:3,type:'human',clearance:5,omega:30,layer:'L3',dept:'Finance'},
-  {id:'E_022',name:'Timothy Mubiru',role:'Internal Audit',tier:3,type:'human',clearance:7,omega:25,layer:'L3',dept:'Compliance'},
-  {id:'E_023',name:'Sandra Martinez',role:'QA Manager',tier:3,type:'human',clearance:6,omega:28,layer:'L3',dept:'Compliance'},
-  {id:'E_024',name:'Ivan Ssemwanga',role:'Safety Inspector',tier:3,type:'human',clearance:6,omega:55,layer:'L3',dept:'Compliance'},
-  {id:'E_025',name:'Alice Alaso',role:'Compliance Asst',tier:3,type:'human',clearance:5,omega:34,layer:'L3',dept:'Compliance'},
-  {id:'E_027',name:'Grace Namaganda',role:'Talent Scout',tier:4,type:'human',clearance:4,omega:28,layer:'L2',dept:'HR'},
-  {id:'E_028',name:'Linda Blake',role:'Talent Scout',tier:4,type:'human',clearance:4,omega:25,layer:'L2',dept:'HR'},
-  {id:'E_029',name:'John Ssebaana',role:'Talent Scout',tier:4,type:'human',clearance:4,omega:24,layer:'L2',dept:'HR'},
-  {id:'E_034',name:'Michael Chen',role:'Lead Quant Analyst',tier:4,type:'human',clearance:7,omega:40,layer:'L2',dept:'Finance'},
-  {id:'E_035',name:'Aisha Nassolo',role:'Derivatives Analyst',tier:4,type:'human',clearance:7,omega:35,layer:'L2',dept:'Finance'},
-  {id:'E_036',name:'Kenji Sato',role:'FX Risk Analyst',tier:4,type:'human',clearance:6,omega:42,layer:'L2',dept:'Finance'},
-  {id:'E_037',name:'Carlos Ruiz',role:'Financial Analyst',tier:4,type:'human',clearance:6,omega:30,layer:'L2',dept:'Finance'},
-  {id:'E_038',name:'Mary Kiwanuka',role:'Financial Analyst',tier:4,type:'human',clearance:6,omega:30,layer:'L2',dept:'Finance'},
-  {id:'E_043',name:'Derick Opio',role:'IT Systems Auditor',tier:4,type:'human',clearance:6,omega:38,layer:'L2',dept:'Compliance'},
-  {id:'E_044',name:'Emma Watson',role:'Data Privacy Spec',tier:4,type:'human',clearance:6,omega:22,layer:'L2',dept:'Compliance'},
-  {id:'E_045',name:'Fred Mugisha',role:'Risk Analyst',tier:4,type:'human',clearance:6,omega:25,layer:'L2',dept:'Compliance'},
-  {id:'E_051',name:'Amina Kintu',role:'Logistics Coord',tier:5,type:'human',clearance:4,omega:110,layer:'L1',dept:'Ops'},
-  {id:'E_052',name:'Brian Kakooza',role:'Truck Driver',tier:5,type:'human',clearance:2,omega:180,layer:'L1',dept:'Ops'},
-  {id:'E_053',name:'Juma Masaba',role:'Truck Driver',tier:5,type:'human',clearance:2,omega:175,layer:'L1',dept:'Ops'},
-  {id:'E_055',name:'Paul Mwanga',role:'Van Driver',tier:5,type:'human',clearance:2,omega:130,layer:'L1',dept:'Ops'},
-  {id:'E_056',name:'Sarah Tumwebaze',role:'Van Driver',tier:5,type:'human',clearance:2,omega:125,layer:'L1',dept:'Ops'},
-  {id:'E_081',name:'Florence Nabaasa',role:'Head Sanitarian',tier:5,type:'human',clearance:3,omega:15,layer:'L1',dept:'Infra'},
-  {id:'E_082',name:'Patrick Ochieng',role:'Facilities',tier:5,type:'human',clearance:1,omega:8,layer:'L1',dept:'Infra'},
-  {id:'E_084',name:'Joseph Mukasa',role:'Heavy Mech',tier:5,type:'human',clearance:3,omega:45,layer:'L1',dept:'Ops'},
-  {id:'E_085',name:'Alex Mugume',role:'Fleet Mechanic',tier:5,type:'human',clearance:3,omega:50,layer:'L1',dept:'Ops'},
-  {id:'E_086',name:'John Ogwang',role:'Security Guard',tier:5,type:'human',clearance:2,omega:60,layer:'L1',dept:'Infra'},
-  {id:'E_091',name:'Kevin Mukonyo',role:'Finance Intern',tier:6,type:'human',clearance:2,omega:12,layer:'L1',dept:'Finance'},
-  {id:'E_092',name:'Ritah Namubiru',role:'Talent Intern',tier:6,type:'human',clearance:2,omega:14,layer:'L1',dept:'HR'},
-  {id:'E_093',name:'Arthur Sazi',role:'Supply Chain Intern',tier:6,type:'human',clearance:2,omega:20,layer:'L1',dept:'Ops'},
-  {id:'E_094',name:'Brenda Komugisha',role:'Legal Intern',tier:6,type:'human',clearance:2,omega:10,layer:'L1',dept:'Compliance'},
-  {id:'E_095',name:'Derrick Lubega',role:'IT Intern',tier:6,type:'human',clearance:2,omega:25,layer:'L1',dept:'Infra'},
-  {id:'M_001',name:'Truck #1 (M_001)',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
-  {id:'M_004',name:'Truck #4 (M_004)',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
-  {id:'M_007',name:'Truck #7 (M_007)',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
-  {id:'M_012',name:'Van #12 (M_012)',role:'Delivery Van',tier:'M',type:'machine',clearance:1,omega:3600,layer:'L1',dept:'Ops'},
-  {id:'M_018',name:'Van #18 (M_018)',role:'Delivery Van',tier:'M',type:'machine',clearance:1,omega:3600,layer:'L1',dept:'Ops'},
-  {id:'M_031',name:'Edge Node α',role:'Compute/JWT',tier:'M',type:'machine',clearance:1,omega:86400,layer:'L2',dept:'Infra'},
-  {id:'M_032',name:'Edge Node β',role:'Compute/JWT',tier:'M',type:'machine',clearance:1,omega:86400,layer:'L2',dept:'Infra'},
+  {id:'E_001',name:'Kato Mukasa',role:'CEO',tier:'1',type:'human',clearance:10,omega:2,layer:'L5',dept:'Executive'},
+  {id:'E_002',name:'Sarah Achieng',role:'CHRO',tier:'1',type:'human',clearance:9,omega:4,layer:'L5',dept:'HR'},
+  {id:'E_003',name:'James Musisi',role:'COO',tier:'1',type:'human',clearance:9,omega:5,layer:'L5',dept:'Ops'},
+  {id:'E_004',name:'Elena Rostova',role:'CFO',tier:'1',type:'human',clearance:9,omega:3,layer:'L5',dept:'Finance'},
+  {id:'E_005',name:'Robert Lwanga',role:'CCO',tier:'1',type:'human',clearance:9,omega:6,layer:'L5',dept:'Compliance'},
+  {id:'E_006',name:'Marcus Vance',role:'VP Talent',tier:'2',type:'human',clearance:8,omega:8,layer:'L4',dept:'HR'},
+  {id:'E_007',name:'Diana Katusiime',role:'VP Supply Chain',tier:'2',type:'human',clearance:8,omega:10,layer:'L4',dept:'Ops'},
+  {id:'E_008',name:'Tariq Al-Mansoor',role:'VP Treasury',tier:'2',type:'human',clearance:8,omega:7,layer:'L4',dept:'Finance'},
+  {id:'E_009',name:'Joan Okello',role:'VP Regulatory',tier:'2',type:'human',clearance:8,omega:9,layer:'L4',dept:'Compliance'},
+  {id:'E_010',name:'Simon Peter Ojok',role:'VP Infrastructure',tier:'2',type:'human',clearance:8,omega:12,layer:'L4',dept:'Infra'},
+  {id:'E_011',name:'Brenda Nsubuga',role:'HR Manager',tier:'3',type:'human',clearance:6,omega:15,layer:'L3',dept:'HR'},
+  {id:'E_012',name:'David Cox',role:'HR Manager',tier:'3',type:'human',clearance:6,omega:14,layer:'L3',dept:'HR'},
+  {id:'E_013',name:'Arthur Ssewankambo',role:'Asst HR Mgr',tier:'3',type:'human',clearance:5,omega:22,layer:'L3',dept:'HR'},
+  {id:'E_014',name:'Rajesh Patel',role:'Dispatch Mgr',tier:'3',type:'human',clearance:6,omega:45,layer:'L3',dept:'Ops'},
+  {id:'E_015',name:'Fiona Wall',role:'Logistics Lead',tier:'3',type:'human',clearance:6,omega:38,layer:'L3',dept:'Ops'},
+  {id:'E_016',name:'Moses Bwambale',role:'Terminal Supv',tier:'3',type:'human',clearance:6,omega:50,layer:'L3',dept:'Ops'},
+  {id:'E_017',name:'Grace Atim',role:'Asst Dispatcher',tier:'3',type:'human',clearance:5,omega:65,layer:'L3',dept:'Ops'},
+  {id:'E_018',name:'Chloe Dupont',role:'Fleet Health Mgr',tier:'3',type:'human',clearance:6,omega:40,layer:'L3',dept:'Ops'},
+  {id:'E_019',name:'Samuel Gyimah',role:'Billing Mgr',tier:'3',type:'human',clearance:6,omega:20,layer:'L3',dept:'Finance'},
+  {id:'E_020',name:'Lin Wei',role:'Treasury Mgr',tier:'3',type:'human',clearance:7,omega:18,layer:'L3',dept:'Finance'},
+  {id:'E_021',name:'Patricia Nabakooza',role:'Accounts Asst',tier:'3',type:'human',clearance:5,omega:30,layer:'L3',dept:'Finance'},
+  {id:'E_022',name:'Timothy Mubiru',role:'Internal Audit',tier:'3',type:'human',clearance:7,omega:25,layer:'L3',dept:'Compliance'},
+  {id:'E_023',name:'Sandra Martinez',role:'QA Manager',tier:'3',type:'human',clearance:6,omega:28,layer:'L3',dept:'Compliance'},
+  {id:'E_024',name:'Ivan Ssemwanga',role:'Safety Inspector',tier:'3',type:'human',clearance:6,omega:55,layer:'L3',dept:'Compliance'},
+  {id:'E_025',name:'Alice Alaso',role:'Compliance Asst',tier:'3',type:'human',clearance:5,omega:34,layer:'L3',dept:'Compliance'},
+  {id:'E_027',name:'Grace Namaganda',role:'Talent Scout',tier:'4',type:'human',clearance:4,omega:28,layer:'L2',dept:'HR'},
+  {id:'E_028',name:'Linda Blake',role:'Talent Scout',tier:'4',type:'human',clearance:4,omega:25,layer:'L2',dept:'HR'},
+  {id:'E_029',name:'John Ssebaana',role:'Talent Scout',tier:'4',type:'human',clearance:4,omega:24,layer:'L2',dept:'HR'},
+  {id:'E_034',name:'Michael Chen',role:'Lead Quant Analyst',tier:'4',type:'human',clearance:7,omega:40,layer:'L2',dept:'Finance'},
+  {id:'E_035',name:'Aisha Nassolo',role:'Derivatives Analyst',tier:'4',type:'human',clearance:7,omega:35,layer:'L2',dept:'Finance'},
+  {id:'E_036',name:'Kenji Sato',role:'FX Risk Analyst',tier:'4',type:'human',clearance:6,omega:42,layer:'L2',dept:'Finance'},
+  {id:'E_037',name:'Carlos Ruiz',role:'Financial Analyst',tier:'4',type:'human',clearance:6,omega:30,layer:'L2',dept:'Finance'},
+  {id:'E_038',name:'Mary Kiwanuka',role:'Financial Analyst',tier:'4',type:'human',clearance:6,omega:30,layer:'L2',dept:'Finance'},
+  {id:'E_043',name:'Derick Opio',role:'IT Systems Auditor',tier:'4',type:'human',clearance:6,omega:38,layer:'L2',dept:'Compliance'},
+  {id:'E_044',name:'Emma Watson',role:'Data Privacy Spec',tier:'4',type:'human',clearance:6,omega:22,layer:'L2',dept:'Compliance'},
+  {id:'E_045',name:'Fred Mugisha',role:'Risk Analyst',tier:'4',type:'human',clearance:6,omega:25,layer:'L2',dept:'Compliance'},
+  {id:'E_051',name:'Amina Kintu',role:'Logistics Coord',tier:'5',type:'human',clearance:4,omega:110,layer:'L1',dept:'Ops'},
+  {id:'E_052',name:'Brian Kakooza',role:'Truck Driver',tier:'5',type:'human',clearance:2,omega:180,layer:'L1',dept:'Ops'},
+  {id:'E_053',name:'Juma Masaba',role:'Truck Driver',tier:'5',type:'human',clearance:2,omega:175,layer:'L1',dept:'Ops'},
+  {id:'E_055',name:'Paul Mwanga',role:'Van Driver',tier:'5',type:'human',clearance:2,omega:130,layer:'L1',dept:'Ops'},
+  {id:'E_056',name:'Sarah Tumwebaze',role:'Van Driver',tier:'5',type:'human',clearance:2,omega:125,layer:'L1',dept:'Ops'},
+  {id:'E_081',name:'Florence Nabaasa',role:'Head Sanitarian',tier:'5',type:'human',clearance:3,omega:15,layer:'L1',dept:'Infra'},
+  {id:'E_082',name:'Patrick Ochieng',role:'Facilities',tier:'5',type:'human',clearance:1,omega:8,layer:'L1',dept:'Infra'},
+  {id:'E_084',name:'Joseph Mukasa',role:'Heavy Mechanic',tier:'5',type:'human',clearance:3,omega:45,layer:'L1',dept:'Ops'},
+  {id:'E_085',name:'Alex Mugume',role:'Fleet Mechanic',tier:'5',type:'human',clearance:3,omega:50,layer:'L1',dept:'Ops'},
+  {id:'E_086',name:'John Ogwang',role:'Security Guard',tier:'5',type:'human',clearance:2,omega:60,layer:'L1',dept:'Infra'},
+  {id:'E_091',name:'Kevin Mukonyo',role:'Finance Intern',tier:'6',type:'human',clearance:2,omega:12,layer:'L1',dept:'Finance'},
+  {id:'E_092',name:'Ritah Namubiru',role:'Talent Intern',tier:'6',type:'human',clearance:2,omega:14,layer:'L1',dept:'HR'},
+  {id:'E_093',name:'Arthur Sazi',role:'Supply Chain Intern',tier:'6',type:'human',clearance:2,omega:20,layer:'L1',dept:'Ops'},
+  {id:'E_094',name:'Brenda Komugisha',role:'Legal Intern',tier:'6',type:'human',clearance:2,omega:10,layer:'L1',dept:'Compliance'},
+  {id:'E_095',name:'Derrick Lubega',role:'IT Intern',tier:'6',type:'human',clearance:2,omega:25,layer:'L1',dept:'Infra'},
+  {id:'M_001',name:'Truck M_001',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
+  {id:'M_004',name:'Truck M_004',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
+  {id:'M_007',name:'Truck M_007',role:'Heavy Freight',tier:'M',type:'machine',clearance:1,omega:1800,layer:'L1',dept:'Ops'},
+  {id:'M_012',name:'Van M_012',role:'Delivery Van',tier:'M',type:'machine',clearance:1,omega:3600,layer:'L1',dept:'Ops'},
+  {id:'M_018',name:'Van M_018',role:'Delivery Van',tier:'M',type:'machine',clearance:1,omega:3600,layer:'L1',dept:'Ops'},
+  {id:'M_031',name:'Edge Node α',role:'Compute / JWT',tier:'M',type:'machine',clearance:1,omega:86400,layer:'L2',dept:'Infra'},
+  {id:'M_032',name:'Edge Node β',role:'Compute / JWT',tier:'M',type:'machine',clearance:1,omega:86400,layer:'L2',dept:'Infra'},
   {id:'V_01',name:'Tier-1 Bank A',role:'Investment Bank',tier:'V',type:'vendor',clearance:5,omega:288,layer:'L3',dept:'Finance'},
   {id:'V_02',name:'Tier-1 Bank B',role:'Investment Bank',tier:'V',type:'vendor',clearance:5,omega:288,layer:'L3',dept:'Finance'},
   {id:'FX',name:'FX Ticker USD/UGX',role:'Market data',tier:'V',type:'vendor',clearance:1,omega:1440,layer:'L2',dept:'Finance'},
   {id:'BONDS',name:'Bond Yield Feed',role:'Market data',tier:'V',type:'vendor',clearance:1,omega:288,layer:'L2',dept:'Finance'},
 ];
 
-const EVENT_TYPES = {
-  telemetry: {label:'telemetry', layer:'L1'},
-  journal: {label:'journal', layer:'L2'},
-  sense: {label:'sense', layer:'L1'},
-  token_issued: {label:'token_issued', layer:'L3'},
-  external_shock: {label:'external_shock', layer:'L4'},
-  relation_started: {label:'relation_started', layer:'L5'},
-  relation_ended: {label:'relation_ended', layer:'L5'},
-  regression_target: {label:'regression_target', layer:'L3'},
-  compliance_check: {label:'compliance_check', layer:'L4'},
-  maintenance_log: {label:'maintenance_log', layer:'L2'},
-  market_tick: {label:'market_tick', layer:'L2'},
+const OUTCOMES = {
+  equity:    {name:'Equity ($M)',       base:142,   noise:0.8,  drivers:['FX','V_01','E_004','E_034','E_035','M_031']},
+  fx:        {name:'FX USD/UGX',        base:3720,  noise:12,   drivers:['FX','V_01','V_02','BONDS','E_036']},
+  fleet:     {name:'Fleet health %',    base:97,    noise:0.3,  drivers:['M_001','M_004','M_007','E_084','E_085','E_018']},
+  throughput:{name:'Throughput index',  base:100,   noise:1.5,  drivers:['E_014','E_015','E_052','E_053','M_012','E_007']},
+  fgt_error: {name:'ε_FGT error',       base:0.042, noise:0.005,drivers:['E_001','E_004','E_043','M_031','E_022']},
 };
 
-const OUTCOME_SIGNALS = {
-  equity: {name:'Equity ($M)', base:142, noise:0.8, drivers:['FX','V_01','E_004','E_034','E_035','M_031']},
-  fx: {name:'FX USD/UGX', base:3720, noise:12, drivers:['FX','V_01','V_02','BONDS','E_036']},
-  fleet: {name:'Fleet health %', base:97, noise:0.3, drivers:['M_001','M_004','M_007','E_084','E_085','E_018']},
-  throughput: {name:'Throughput index', base:100, noise:1.5, drivers:['E_014','E_015','E_052','E_053','M_012','E_007']},
-  fgt_error: {name:'ε_FGT error', base:0.042, noise:0.005, drivers:['E_001','E_004','E_043','M_031','E_022']},
-};
-
-const PREDICTOR_SIGNALS = [
-  {id:'FX',label:'FX market tick',layer:'L2',agent:'FX'},
-  {id:'fleet_telemetry',label:'Fleet telemetry freq',layer:'L1',agent:'M_001–M_030'},
-  {id:'journal_exec',label:'Executive journal rate',layer:'L2',agent:'E_001–E_005'},
-  {id:'mechanic_omega',label:'Mechanic log rate',layer:'L1',agent:'E_084/E_085'},
-  {id:'compliance_checks',label:'Compliance event rate',layer:'L4',agent:'E_022/E_043'},
-  {id:'bond_yield',label:'Bond yield delta',layer:'L2',agent:'BONDS'},
-  {id:'quant_journals',label:'Quant analyst journals',layer:'L2',agent:'E_034–E_036'},
-  {id:'dispatch_freq',label:'Dispatch event freq',layer:'L3',agent:'E_014/E_015'},
-  {id:'jwt_handshakes',label:'JWT auth rate (edge)',layer:'L2',agent:'M_031/M_032'},
-  {id:'intern_logins',label:'Intern activity',layer:'L1',agent:'E_091–E_095'},
+const PREDICTORS = [
+  {id:'FX',           label:'FX market tick',        layer:'L2',agent:'FX'},
+  {id:'fleet_telem',  label:'Fleet telemetry freq',   layer:'L1',agent:'M_001–M_030'},
+  {id:'exec_journals',label:'Executive journal rate', layer:'L2',agent:'E_001–E_005'},
+  {id:'mech_omega',   label:'Mechanic log rate',      layer:'L1',agent:'E_084/E_085'},
+  {id:'compliance',   label:'Compliance event rate',  layer:'L4',agent:'E_022/E_043'},
+  {id:'bond_yield',   label:'Bond yield delta',       layer:'L2',agent:'BONDS'},
+  {id:'quant_jrnl',   label:'Quant analyst journals', layer:'L2',agent:'E_034–E_036'},
+  {id:'dispatch_freq',label:'Dispatch event freq',    layer:'L3',agent:'E_014/E_015'},
+  {id:'jwt_rate',     label:'JWT auth rate',          layer:'L2',agent:'M_031/M_032'},
+  {id:'intern_act',   label:'Intern activity',        layer:'L1',agent:'E_091–E_095'},
 ];
 
-let state = {
+const OUTCOME_KEYS = Object.keys(OUTCOMES);
+
+/* ── STATE ──────────────────────────────────────────────────── */
+let ST = {
   totalEvents: 0,
   fx: 3720,
   fleet: 97.0,
@@ -287,276 +1151,299 @@ let state = {
   equity: 142,
   throughput: 100,
   events: [],
-  timeSeriesData: {equity:[],fx:[],fleet:[],throughput:[],fgt_error:[]},
-  jacobianMatrix: [],
-  predictorValues: {},
+  ts: {equity:[],fx:[],fleet:[],throughput:[],fgt_error:[]},
+  jac: [],
+  predVals: {},
+  startTime: Date.now(),
 };
 
-function rand(min, max) { return min + Math.random() * (max - min); }
-function randInt(min, max) { return Math.floor(rand(min, max+1)); }
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function now() { const d=new Date(); return d.toTimeString().slice(0,8); }
+/* ── HELPERS ────────────────────────────────────────────────── */
+const rand    = (a,b) => a + Math.random()*(b-a);
+const randInt = (a,b) => Math.floor(rand(a,b+1));
+const pick    = arr  => arr[Math.floor(Math.random()*arr.length)];
+const clamp   = (v,a,b) => Math.max(a,Math.min(b,v));
+const nowStr  = () => { const d=new Date(); return d.toTimeString().slice(0,8); };
 
-function initJacobian() {
-  const n = PREDICTOR_SIGNALS.length;
-  const outcomes = Object.keys(OUTCOME_SIGNALS);
-  state.jacobianMatrix = outcomes.map((out, oi) =>
-    PREDICTOR_SIGNALS.map((pred, pi) => {
-      const inDrivers = OUTCOME_SIGNALS[out].drivers.includes(pred.agent.split('/')[0]) ||
-                        OUTCOME_SIGNALS[out].drivers.includes(pred.id) ||
-                        OUTCOME_SIGNALS[out].drivers.some(d => pred.agent.includes(d));
-      const base = inDrivers ? rand(0.45, 0.92) : rand(0.02, 0.28);
-      return base * (Math.random() > 0.5 ? 1 : -1);
-    })
-  );
-  PREDICTOR_SIGNALS.forEach(p => { state.predictorValues[p.id] = rand(0.2, 1.0); });
+function fmtUptime(ms) {
+  const s=Math.floor(ms/1000), m=Math.floor(s/60), h=Math.floor(m/60);
+  if (h>0) return `${h}h ${m%60}m`;
+  if (m>0) return `${m}m ${s%60}s`;
+  return `${s}s`;
 }
 
+/* ── INIT JACOBIAN ──────────────────────────────────────────── */
+function initJacobian() {
+  ST.jac = OUTCOME_KEYS.map((out,oi) =>
+    PREDICTORS.map((pred,pi) => {
+      const driven = OUTCOMES[out].drivers.some(d =>
+        d===pred.id || d===pred.agent.split('/')[0] || pred.agent.includes(d));
+      const base = driven ? rand(0.45,0.93) : rand(0.02,0.28);
+      return base * (Math.random()>0.5 ? 1 : -1);
+    })
+  );
+  PREDICTORS.forEach(p => { ST.predVals[p.id] = rand(0.2,1.0); });
+}
+
+/* ── EVENT GENERATION ───────────────────────────────────────── */
 function generateEvent() {
-  const agent = pick(AGENTS.filter(a => a.type !== 'vendor' || Math.random() > 0.6));
-  const isMarket = agent.type === 'vendor';
-  const isMachine = agent.type === 'machine';
+  const agent = pick(AGENTS.filter(a => a.type!=='vendor' || Math.random()>0.55));
+  const isMachine = agent.type==='machine';
+  const isVendor  = agent.type==='vendor';
   let evType, payload;
+
   if (isMachine) {
     evType = 'telemetry';
-    if (agent.dept === 'Ops') {
-      const fuel = rand(80, 180).toFixed(1);
-      const speed = rand(0, 95).toFixed(0);
-      payload = `fuel=${fuel}L spd=${speed}km/h`;
+    if (agent.dept==='Ops') {
+      payload = `fuel=${rand(80,180).toFixed(1)}L spd=${rand(0,95).toFixed(0)}km/h`;
     } else {
-      const lat = rand(0.28, 0.42).toFixed(4);
-      const cpu = rand(12, 78).toFixed(0);
-      payload = `cpu=${cpu}% jwt_ok req_lat=1.2ms`;
+      payload = `cpu=${rand(12,78).toFixed(0)}% jwt_ok lat=1.${randInt(1,9)}ms`;
     }
-  } else if (isMarket) {
+  } else if (isVendor) {
     evType = 'market_tick';
-    if (agent.id === 'FX') {
-      const delta = rand(-18, 18);
-      state.fx = Math.max(3600, Math.min(3900, state.fx + delta));
-      payload = `USD/UGX=${state.fx.toFixed(0)} Δ${delta.toFixed(0)}`;
+    if (agent.id==='FX') {
+      const d = rand(-18,18);
+      ST.fx = clamp(ST.fx+d,3600,3900);
+      payload = `USD/UGX=${ST.fx.toFixed(0)} Δ${d>0?'+':''}${d.toFixed(0)}`;
     } else {
-      const bps = rand(-8, 8).toFixed(1);
-      payload = `yield_Δ=${bps}bps`;
+      payload = `yield_Δ=${rand(-8,8).toFixed(1)}bps`;
     }
-  } else if (agent.tier <= 2) {
-    evType = Math.random() > 0.4 ? 'journal' : 'token_issued';
-    if (evType === 'journal') {
-      const intentions = ['optimize_throughput','review_FX_exposure','compliance_audit_q2','talent_pipeline_update','fleet_maintenance_q3'];
-      payload = `intent="${pick(intentions)}" ε=${rand(0.01,0.06).toFixed(3)}`;
+  } else if (agent.tier==='1'||agent.tier==='2') {
+    evType = Math.random()>0.45 ? 'journal' : 'token_issued';
+    if (evType==='journal') {
+      const intents=['optimize_throughput','review_FX_exposure','compliance_audit_q2','talent_pipeline_update','fleet_maintenance_q3'];
+      payload = `intent="${pick(intents)}" ε=${rand(0.01,0.06).toFixed(3)}`;
     } else {
-      const target = pick(AGENTS.filter(a=>a.clearance < agent.clearance));
-      payload = `→${target.id} cl+${randInt(1,3)} ${randInt(2,12)}h`;
+      const tgt = pick(AGENTS.filter(a=>a.clearance<(agent.clearance||1)));
+      payload = `→${tgt.id} cl+${randInt(1,3)} ${randInt(2,12)}h`;
     }
-  } else if (agent.dept === 'Compliance') {
+  } else if (agent.dept==='Compliance') {
     evType = 'compliance_check';
-    payload = `risk=${rand(0.1,0.4).toFixed(2)} status=${Math.random()>0.15?'pass':'flag'}`;
-  } else if (agent.role.includes('Mechanic') || agent.role.includes('Fleet')) {
+    payload = `risk=${rand(0.1,0.4).toFixed(2)} status=${Math.random()>0.15?'pass':'⚑ flag'}`;
+  } else if (agent.role.includes('Mechanic')||agent.role.includes('Fleet')) {
     evType = 'maintenance_log';
     const truck = pick(['M_001','M_004','M_007','M_012']);
-    const ok = Math.random() > 0.18;
-    state.fleet = Math.max(88, Math.min(100, state.fleet + (ok ? 0.05 : -0.3)));
-    payload = `asset=${truck} check=${ok?'ok':'flagged'}`;
-  } else if (agent.dept === 'Finance') {
+    const ok = Math.random()>0.18;
+    ST.fleet = clamp(ST.fleet+(ok?0.05:-0.3),88,100);
+    payload = `asset=${truck} check=${ok?'ok':'⚑ flagged'}`;
+  } else if (agent.dept==='Finance') {
     evType = 'regression_target';
     payload = `target=${pick(['equity','fx','derivatives'])} var=${rand(0.008,0.025).toFixed(3)}`;
   } else {
-    evType = Math.random() > 0.6 ? 'sense' : 'journal';
-    payload = evType === 'sense' ? `gate_scan loc=${agent.dept.toLowerCase()}` : `ω=${agent.omega}/day active`;
+    evType = Math.random()>0.6 ? 'sense' : 'journal';
+    payload = evType==='sense' ? `gate_scan dept=${agent.dept.toLowerCase()}` : `ω_log=${agent.omega}/day`;
   }
-  const layer = EVENT_TYPES[evType]?.layer || agent.layer;
-  state.totalEvents++;
-  const ev = { t: now(), id: agent.id, name: agent.name, evType, layer, payload, clearance: agent.clearance };
-  state.events.unshift(ev);
-  if (state.events.length > 200) state.events.pop();
-  updateMetrics();
-  updateTimeSeries();
-  updatePredictorValues();
+
+  const layer = evType==='telemetry'||evType==='sense' ? 'L1'
+              : evType==='journal'||evType==='market_tick' ? 'L2'
+              : evType==='regression_target'||evType==='maintenance_log' ? 'L3'
+              : evType==='compliance_check' ? 'L4'
+              : evType==='token_issued' ? 'L5'
+              : agent.layer;
+
+  ST.totalEvents++;
+  const ev = { t:nowStr(), id:agent.id, name:agent.name, evType, layer, payload, cl:agent.clearance };
+  ST.events.unshift(ev);
+  if (ST.events.length>200) ST.events.pop();
+
+  const fgtN = rand(-0.004,0.004);
+  ST.fgt = clamp(ST.fgt+fgtN,0.01,0.12);
+  ST.equity = clamp(ST.equity+rand(-0.5,0.5),120,165);
+  ST.throughput = clamp(ST.throughput+rand(-1.2,1.2),88,115);
+
+  Object.keys(ST.ts).forEach(k=>{
+    const v = k==='equity' ? ST.equity+rand(-0.3,0.3)
+            : k==='fx'     ? ST.fx+rand(-4,4)
+            : k==='fleet'  ? ST.fleet
+            : k==='throughput' ? ST.throughput
+            : ST.fgt;
+    ST.ts[k].push(v);
+    if(ST.ts[k].length>140) ST.ts[k].shift();
+  });
+
+  PREDICTORS.forEach(p=>{
+    ST.predVals[p.id] = clamp(ST.predVals[p.id]+rand(-0.03,0.03),0,1);
+  });
+  ST.jac = ST.jac.map(row => row.map(v => clamp(v+rand(-0.006,0.006),-1,1)));
+
   return ev;
 }
 
-function updateMetrics() {
-  const fgtNoise = rand(-0.004, 0.004);
-  state.fgt = Math.max(0.01, Math.min(0.12, state.fgt + fgtNoise));
-  const eqNoise = rand(-0.5, 0.5);
-  state.equity = Math.max(120, Math.min(165, state.equity + eqNoise));
-  document.getElementById('m-total').textContent = state.totalEvents.toLocaleString();
-  document.getElementById('m-fx').textContent = state.fx.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  document.getElementById('m-fleet').textContent = state.fleet.toFixed(1) + '%';
-  document.getElementById('m-fgt').textContent = state.fgt.toFixed(3);
-  document.getElementById('event-counter').textContent = state.totalEvents.toLocaleString();
-}
-
-function updateTimeSeries() {
-  const maxLen = 120;
-  state.timeSeriesData.equity.push(state.equity + rand(-0.4,0.4));
-  state.timeSeriesData.fx.push(state.fx + rand(-5,5));
-  state.timeSeriesData.fleet.push(state.fleet);
-  state.timeSeriesData.throughput.push(state.throughput + rand(-1.2,1.2));
-  state.timeSeriesData.fgt_error.push(state.fgt);
-  Object.keys(state.timeSeriesData).forEach(k => {
-    if (state.timeSeriesData[k].length > maxLen) state.timeSeriesData[k].shift();
-  });
-}
-
-function updatePredictorValues() {
-  PREDICTOR_SIGNALS.forEach(p => {
-    state.predictorValues[p.id] = Math.max(0, Math.min(1, state.predictorValues[p.id] + rand(-0.03, 0.03)));
-  });
-  state.jacobianMatrix = state.jacobianMatrix.map((row, oi) =>
-    row.map((v, pi) => Math.max(-1, Math.min(1, v + rand(-0.008, 0.008))))
-  );
-}
-
+/* ── RENDER STREAM ──────────────────────────────────────────── */
 function renderStream() {
-  const container = document.getElementById('event-stream');
-  const top5 = state.events.slice(0, 60);
-  container.innerHTML = top5.map(ev => `
-    <div class="event-line">
+  const body = document.getElementById('stream-body');
+  body.innerHTML = ST.events.slice(0,80).map((ev,i)=>
+    `<div class="ev-row${i===0?' fresh':''}">
       <span class="ev-time">${ev.t}</span>
-      <span class="layer-badge ${ev.layer}">${ev.layer}</span>
+      <span class="layer-pill lp-${ev.layer}">${ev.layer}</span>
       <span class="ev-agent">${ev.id}</span>
-      <span class="ev-type">${ev.evType}</span>
+      <span class="ev-etype">${ev.evType}</span>
       <span class="ev-payload">${ev.payload}</span>
-    </div>`).join('');
+    </div>`
+  ).join('');
 }
 
+/* ── RENDER TICKER ──────────────────────────────────────────── */
+function renderTicker() {
+  const top8 = ST.events.slice(0,8);
+  const inner = document.getElementById('ticker-inner');
+  const items = [...top8,...top8].map(ev=>
+    `<span class="ticker-item"><span class="ticker-dot"></span>${ev.id} · ${ev.evType} · ${ev.payload}</span>`
+  ).join('');
+  inner.innerHTML = items;
+}
+
+/* ── RENDER JACOBIAN ────────────────────────────────────────── */
 function renderJacobian() {
-  const outcomes = Object.keys(OUTCOME_SIGNALS);
-  const outLabels = outcomes.map(k => OUTCOME_SIGNALS[k].name);
-  const predLabels = PREDICTOR_SIGNALS.map(p => p.label);
-  const container = document.getElementById('heatmap-container');
-  const colLabels = document.createElement('div');
-  colLabels.className = 'hm-col-labels';
-  outcomes.forEach(k => {
-    const lbl = document.createElement('div');
-    lbl.className = 'hm-col-label';
-    lbl.textContent = OUTCOME_SIGNALS[k].name.split('(')[0].trim();
-    colLabels.appendChild(lbl);
-  });
-  container.innerHTML = '';
-  container.appendChild(colLabels);
-  PREDICTOR_SIGNALS.forEach((pred, pi) => {
-    const row = document.createElement('div');
-    row.className = 'hm-row';
-    const lbl = document.createElement('div');
-    lbl.className = 'hm-label';
-    lbl.textContent = pred.label;
-    row.appendChild(lbl);
-    outcomes.forEach((out, oi) => {
-      const val = state.jacobianMatrix[oi]?.[pi] ?? 0;
-      const absVal = Math.abs(val);
-      const cell = document.createElement('div');
-      cell.className = 'hm-cell';
-      const alpha = 0.15 + absVal * 0.85;
-      if (val > 0) cell.style.background = `rgba(58,180,120,${alpha})`;
-      else cell.style.background = `rgba(220,80,80,${alpha})`;
-      cell.title = `${pred.label} → ${OUTCOME_SIGNALS[out].name}: β=${val.toFixed(3)}`;
-      row.appendChild(cell);
-    });
-    container.appendChild(row);
-  });
+  const colHdrs = document.getElementById('heatmap-col-headers');
+  const rows    = document.getElementById('heatmap-rows');
+
+  colHdrs.innerHTML = OUTCOME_KEYS.map(k=>
+    `<div class="hm-col-hdr">${OUTCOMES[k].name.replace('($M)','').replace('%','').trim()}</div>`
+  ).join('');
+
+  rows.innerHTML = PREDICTORS.map((pred,pi)=>
+    `<div class="hm-row-item">
+      <span class="hm-row-label">${pred.label}</span>
+      ${OUTCOME_KEYS.map((out,oi)=>{
+        const v   = ST.jac[oi]?.[pi] ?? 0;
+        const abs = Math.abs(v);
+        const a   = (0.15 + abs*0.85).toFixed(2);
+        const bg  = v>0
+          ? `rgba(74,222,128,${a})`
+          : `rgba(248,113,113,${a})`;
+        return `<div class="hm-cell" style="background:${bg}" title="${pred.label} → ${OUTCOMES[out].name}: β=${v.toFixed(3)}"></div>`;
+      }).join('')}
+    </div>`
+  ).join('');
+
   renderEigenmodes();
   renderConditionNumbers();
 }
 
 function renderEigenmodes() {
-  const variances = [0.38, 0.22, 0.15, 0.10, 0.07, 0.04, 0.02, 0.01, 0.01].map((v,i) => ({
-    label: `PC${i+1}`, pct: v * 100 * (1 + rand(-0.04,0.04))
-  }));
+  const variances = [38,22,15,10,7,5,3];
   const list = document.getElementById('eigenmode-list');
-  list.innerHTML = variances.slice(0,7).map((e,i) => `
-    <div class="eigen-row">
-      <span class="eigen-num">${e.label}</span>
-      <div class="eigen-bar-wrap"><div class="eigen-bar" style="width:${Math.min(100,e.pct*2.5)}%;opacity:${0.5+e.pct/100}"></div></div>
-      <span class="eigen-pct">${e.pct.toFixed(1)}%</span>
-    </div>`).join('');
-}
-
-function renderConditionNumbers() {
-  const layers = [{n:'sensation',v:rand(8,14)},{n:'attention',v:rand(22,38)},{n:'intention',v:rand(15,28)},{n:'reaction',v:rand(6,12)},{n:'action',v:rand(4,9)}];
-  const container = document.getElementById('condition-numbers');
-  container.innerHTML = layers.map(l => {
-    const danger = l.v > 25;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;">
-      <span style="width:72px;color:var(--color-text-secondary);font-size:11px;">${l.n}</span>
-      <div style="flex:1;height:8px;background:var(--color-background-secondary);border-radius:2px;overflow:hidden;">
-        <div style="width:${Math.min(100,l.v*2.5)}%;height:100%;background:${danger?'#e66':'#3a9'};border-radius:2px;"></div>
-      </div>
-      <span style="font-family:var(--font-mono);font-size:11px;color:${danger?'var(--color-text-danger)':'var(--color-text-secondary)'};">${l.v.toFixed(1)}</span>
+  list.innerHTML = variances.map((pct,i)=>{
+    const jitter = (rand(-2,2)).toFixed(1);
+    const real = (pct + parseFloat(jitter)).toFixed(1);
+    return `<div class="eigen-row">
+      <span class="eigen-label">PC${i+1}</span>
+      <div class="eigen-track"><div class="eigen-fill" style="width:${Math.min(100,real*2.5)}%"></div></div>
+      <span class="eigen-pct">${real}%</span>
     </div>`;
   }).join('');
 }
 
+function renderConditionNumbers() {
+  const layers = [
+    {n:'sensation', v:rand(8,14)},
+    {n:'attention', v:rand(22,36)},
+    {n:'intention', v:rand(14,28)},
+    {n:'reaction',  v:rand(5,12)},
+    {n:'action',    v:rand(4,9)},
+  ];
+  const el = document.getElementById('condition-numbers');
+  el.innerHTML = layers.map(l=>{
+    const cls = l.v>25 ? 'cond-bad' : l.v>15 ? 'cond-warn' : 'cond-ok';
+    return `<div class="cond-row">
+      <span class="cond-label">${l.n}</span>
+      <div class="cond-track"><div class="cond-fill ${cls}" style="width:${Math.min(100,l.v*3)}%"></div></div>
+      <span class="cond-val" style="color:${l.v>25?'var(--red)':l.v>15?'var(--amber)':'var(--text-3)'}">${l.v.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ── REGRESSION CHART ───────────────────────────────────────── */
 let regChart = null;
+
 function updateRegression() {
   const outcome = document.getElementById('outcome-select').value;
-  const sig = OUTCOME_SIGNALS[outcome];
-  const ts = state.timeSeriesData[outcome];
-  const labels = ts.map((_,i) => i % 10 === 0 ? String(i) : '');
+  const sig     = OUTCOMES[outcome];
+  const ts      = ST.ts[outcome];
 
-  if (regChart) { regChart.destroy(); regChart = null; }
+  if (regChart) { regChart.destroy(); regChart=null; }
   const canvas = document.getElementById('reg-chart');
+  const isDark = document.documentElement.dataset.theme==='dark';
+  const lineColor = isDark ? '#4ade80' : '#16a34a';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tickColor = isDark ? '#6b7280' : '#a1a1aa';
+
   regChart = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: labels,
-      datasets: [{
-        label: sig.name,
+      labels: ts.map((_,i)=>i),
+      datasets:[{
         data: ts,
-        borderColor: '#3a9',
+        borderColor: lineColor,
         borderWidth: 1.5,
         pointRadius: 0,
-        tension: 0.3,
-        fill: false
+        tension: 0.35,
+        fill: false,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend:{display:false} },
       scales: {
-        x: { display: false },
-        y: { ticks: { font: { size: 11 }, color: '#888' }, grid: { color: 'rgba(128,128,128,0.12)' } }
+        x: { display:false },
+        y: {
+          ticks: { font:{size:11,family:'JetBrains Mono'}, color:tickColor },
+          grid:  { color:gridColor },
+          border:{ display:false }
+        }
       }
     }
   });
 
-  const tbody = document.getElementById('reg-tbody');
-  const outIdx = Object.keys(OUTCOME_SIGNALS).indexOf(outcome);
-  const rows = PREDICTOR_SIGNALS.map((pred, pi) => {
-    const coef = state.jacobianMatrix[outIdx]?.[pi] ?? 0;
-    const absCoef = Math.abs(coef);
-    const isDriver = sig.drivers.includes(pred.id) || sig.drivers.includes(pred.agent.split('/')[0]);
-    const pVal = isDriver ? rand(0.001, 0.04) : rand(0.08, 0.6);
-    const sig_str = pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : 'ns';
-    return { pred, coef, absCoef, pVal, sig_str };
-  }).sort((a,b) => b.absCoef - a.absCoef);
+  const outIdx = OUTCOME_KEYS.indexOf(outcome);
+  const rows = PREDICTORS.map((pred,pi)=>{
+    const coef  = ST.jac[outIdx]?.[pi] ?? 0;
+    const abs   = Math.abs(coef);
+    const driven = sig.drivers.some(d => d===pred.id||d===pred.agent.split('/')[0]||pred.agent.includes(d));
+    const pVal  = driven ? rand(0.001,0.04) : rand(0.08,0.55);
+    const sigStr = pVal<0.01 ? '**' : pVal<0.05 ? '*' : 'ns';
+    const sigCls = pVal<0.05 ? 'sig-hi' : pVal<0.12 ? 'sig-med' : 'sig-lo';
+    return {pred,coef,abs,pVal,sigStr,sigCls};
+  }).sort((a,b)=>b.abs-a.abs);
 
-  tbody.innerHTML = rows.map(r => {
-    const barW = Math.round(r.absCoef * 80);
-    const color = r.coef > 0 ? '#3a9' : '#e66';
+  document.getElementById('reg-tbody').innerHTML = rows.map(r=>{
+    const barW   = Math.round(r.abs*60);
+    const coefCls= r.coef>0 ? 'coef-pos' : 'coef-neg';
     return `<tr>
       <td>${r.pred.label}</td>
-      <td><span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${r.pred.layer==='L1'?'#E6F1FB':r.pred.layer==='L2'?'#E1F5EE':r.pred.layer==='L3'?'#FAEEDA':'#FAECE7'};color:#444;">${r.pred.layer}</span></td>
-      <td style="font-size:11px;color:var(--color-text-secondary);">${r.pred.agent}</td>
-      <td style="font-family:var(--font-mono);">${r.coef.toFixed(3)}<span class="coef-bar-wrap"><span class="coef-bar" style="width:${barW}px;background:${color};display:block;"></span></span></td>
-      <td style="font-family:var(--font-mono);">${r.absCoef.toFixed(3)}</td>
-      <td class="sig" style="color:${r.pVal<0.05?'var(--color-text-success)':'var(--color-text-tertiary)'};">${r.sig_str} (p=${r.pVal.toFixed(3)})</td>
+      <td><span class="layer-pill lp-${r.pred.layer}">${r.pred.layer}</span></td>
+      <td style="font-family:var(--font-mono);font-size:10px;color:var(--text-3)">${r.pred.agent}</td>
+      <td>
+        <div class="coef-display">
+          <span class="coef-num" style="color:${r.coef>0?'var(--accent)':'var(--red)'}">${r.coef.toFixed(3)}</span>
+          <div class="coef-track"><div class="coef-fill ${coefCls}" style="width:${barW}px"></div></div>
+        </div>
+      </td>
+      <td style="font-family:var(--font-mono)">${r.abs.toFixed(3)}</td>
+      <td><span class="sig-badge ${r.sigCls}">${r.sigStr} p=${r.pVal.toFixed(3)}</span></td>
     </tr>`;
   }).join('');
 }
 
-function renderAgentGrid(agents) {
-  const grid = document.getElementById('agent-grid');
-  grid.innerHTML = agents.map(a => {
-    const tierClass = `t${a.tier}`;
-    const tierLabel = a.tier === 'M' ? 'Machine' : a.tier === 'V' ? 'Vendor' : `T${a.tier}`;
+/* ── AGENT GRID ─────────────────────────────────────────────── */
+function renderAgentGrid(list) {
+  const maxOmega = Math.max(...list.map(a=>a.omega));
+  document.getElementById('agent-grid').innerHTML = list.map(a=>{
+    const tierCls = `t${a.tier}`;
+    const tierLbl = a.tier==='M'?'Machine':a.tier==='V'?'Vendor':`T${a.tier}`;
+    const barW    = Math.round((a.omega/maxOmega)*100);
     return `<div class="agent-card">
-      <span class="tier-badge ${tierClass}">${tierLabel}</span>
+      <span class="agent-tier-badge ${tierCls}">${tierLbl}</span>
       <div class="agent-name">${a.name}</div>
       <div class="agent-role">${a.role}</div>
-      <div class="agent-omega">ω=${a.omega.toLocaleString()}/day · cl=${a.clearance} · ${a.layer}</div>
+      <div class="agent-meta">
+        <span>${a.id}</span>
+        <span>cl=${a.clearance}</span>
+        <span>${a.layer}</span>
+      </div>
+      <div class="agent-omega-bar"><div class="agent-omega-fill" style="width:${barW}%"></div></div>
     </div>`;
   }).join('');
 }
@@ -564,39 +1451,65 @@ function renderAgentGrid(agents) {
 function filterAgents() {
   const tier = document.getElementById('tier-filter').value;
   const type = document.getElementById('type-filter').value;
-  let filtered = AGENTS;
-  if (tier !== 'all') filtered = filtered.filter(a => String(a.tier) === tier);
-  if (type !== 'all') filtered = filtered.filter(a => a.type === type);
-  renderAgentGrid(filtered);
+  let list    = AGENTS;
+  if (tier!=='all') list = list.filter(a=>String(a.tier)===tier);
+  if (type!=='all') list = list.filter(a=>a.type===type);
+  renderAgentGrid(list);
 }
 
+/* ── METRICS UPDATE ─────────────────────────────────────────── */
+function updateMetrics() {
+  document.getElementById('m-total').textContent     = ST.totalEvents.toLocaleString();
+  document.getElementById('m-fx').textContent        = ST.fx.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  document.getElementById('m-fleet').textContent     = ST.fleet.toFixed(1)+'%';
+  document.getElementById('m-fgt').textContent       = ST.fgt.toFixed(3);
+  document.getElementById('event-counter').textContent = ST.totalEvents.toLocaleString();
+  document.getElementById('f-events').textContent   = ST.totalEvents.toLocaleString();
+  document.getElementById('f-uptime').textContent   = fmtUptime(Date.now()-ST.startTime);
+}
+
+/* ── TABS ───────────────────────────────────────────────────── */
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  const tabs = document.querySelectorAll('.tab');
-  const tabNames = ['stream','jacobian','regression','agents'];
-  tabs[tabNames.indexOf(name)].classList.add('active');
-  if (name === 'jacobian') renderJacobian();
-  if (name === 'regression') updateRegression();
-  if (name === 'agents') { renderAgentGrid(AGENTS); }
+  document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const tabs = ['stream','jacobian','regression','agents'];
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(name)].classList.add('active');
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(name)].setAttribute('aria-selected','true');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='jacobian')  renderJacobian();
+  if (name==='regression') updateRegression();
+  if (name==='agents')    renderAgentGrid(AGENTS);
 }
 
+/* ── THEME TOGGLE ───────────────────────────────────────────── */
+const themeBtn = document.getElementById('theme-toggle');
+themeBtn.addEventListener('click', ()=>{
+  const html = document.documentElement;
+  const next = html.dataset.theme==='dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  themeBtn.textContent = next==='dark' ? '🌙' : '☀️';
+  const activeTab = document.querySelector('.panel.active')?.id?.replace('tab-','');
+  if (activeTab==='regression') { setTimeout(updateRegression,50); }
+  if (activeTab==='jacobian')   { setTimeout(renderJacobian,50); }
+});
+
+/* ── MAIN LOOP ──────────────────────────────────────────────── */
 initJacobian();
 renderAgentGrid(AGENTS);
 updateRegression();
+renderJacobian();
 
 let tick = 0;
-function tickLoop() {
-  const ev = generateEvent();
+setInterval(()=>{
+  generateEvent();
+  updateMetrics();
   renderStream();
+  if (tick % 4 === 0) renderTicker();
+  const active = document.querySelector('.panel.active')?.id?.replace('tab-','');
+  if (tick % 5 === 0 && active==='jacobian')  renderJacobian();
+  if (tick % 4 === 0 && active==='regression') updateRegression();
   tick++;
-  if (tick % 3 === 0) {
-    const activeTab = document.querySelector('.panel.active')?.id;
-    if (activeTab === 'tab-jacobian') renderJacobian();
-    if (activeTab === 'tab-regression') updateRegression();
-  }
-}
-
-setInterval(tickLoop, 850);
+}, 900);
 </script>
+</body>
+</html>
