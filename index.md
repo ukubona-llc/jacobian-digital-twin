@@ -16,6 +16,8 @@
 <!-- Usage inline: $E = mc^2$ -->
 <!-- Usage block:  $$\int_0^\infty e^{-x} dx = 1$$ -->
 
+{% raw %}
+
 # xAI
      
 #feedback #sensation #embodied #adversarial #training 
@@ -1695,5 +1697,4 @@ Its better feel like an actual [Fortune 500](https://ukubona-llc.github.io/round
 
 
 
----
-
+{% endraw %}
