@@ -17,7 +17,7 @@
 <!-- Usage block:  $$\int_0^\infty e^{-x} dx = 1$$ -->
 
 # xAI
-
+     
 #feedback #sensation #embodied #adversarial #training 
 
 You must read the content of these URLs first:
