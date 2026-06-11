@@ -47,7 +47,7 @@ III. f(σ²,λ,ε). Monumental (Intension-Perturbation/Adaptation)
 - How to point: a primer for martians 
 - What it takes to be a pointer (decision time)
 - Assisted pointing & pointing proxy 
-IV.  γ|ε_FGT|² . Eigenmode (Reaction/Error / Update Rule)
+IV.  `γ|ε_FGT|²` . Eigenmode (Reaction/Error / Update Rule)
 - Pointer & Power (humans represent and transform the world with increasing fidelity each epoch through next-token prediction, grounded truth, error estimation, updates and stochastic gradient descent — like ant scouting for sugar; learning time). Eigenmode = unambiguous objective function 
 V. L(θᵗ⁺¹). Scalar (Action-SGD/Self)
 - Transcendent animal: beyond pointing (our distinction comes from SGD beyond sugar: to virtually any minima we decide to point to, including the mathematical, musical, and generally non-representative ; yes, the non-imitative)
@@ -119,14 +119,14 @@ To achieve AGI, close the loop: **Sensation (embodied feedback/bias/prior update
 - **I. θᵗ. Antiquarian (Sensation/Nonself)**: Raw, uncompressed tensor from sensors/journaling (humans + machines + environment). Pin language to world via high-dimensional embodied data (infant-like). Adversary injects noise/perturbations here.
 - **II. L₀ + Σwᵢ·Lᵢ. Critical (Attention-Sensitivity/Pointing)**: Compressor matrix. Salience detection ("Do animals get the point?"). Jacobian for sensitivity analysis. Adversarial: point to threats/opportunities.
 - **III. f(σ², λ, ε). Monumental (Intention-Perturbation/Adaptation)**: Activation/decision space. How to point (primer for Martians). Assisted/proxy pointing. Emergent intentions from perturbations.
-- **IV. γ|ε_FGT|². Eigenmode (Reaction/Error/Update Rule)**: Stability via federated ground truth (FGT). Error-driven updates (next-token prediction on tomorrow's journal). Adversarial training sharpens eigenmodes.
+- **IV. `γ|ε_FGT|²`. Eigenmode (Reaction/Error/Update Rule)**: Stability via federated ground truth (FGT). Error-driven updates (next-token prediction on tomorrow's journal). Adversarial training sharpens eigenmodes.
 - **V. L(θᵗ⁺¹). Scalar (Action-SGD/Self)**: Transcendent update. Beyond imitation to arbitrary minima (math, music, non-representative). Legacy/scaling.
 
 **Kingdomcome Alignment** (Testable via Jacobian):
 - θᵗ: Kingdom Calling (Nonself/Issue)
 - L₀+Σwᵢ·Lᵢ: Dignity/Discipleship/Deployment (Surface/Input)
 - f(σ²,λ,ε): Systems/Rhythm/Truth (Visceral/Throughput)
-- γ|ε_FGT|²: Scaling for Impact (Arterial/Output)
+- `γ|ε_FGT|²`: Scaling for Impact (Arterial/Output)
 - L(θᵗ⁺¹): Legacy (N-Way/Self)
 
 **Σ Jacobian Structure** (Multi-scale):
@@ -236,7 +236,7 @@ error = impact['pedigree_loss']  # Feed to FGT / SGD
 This pushes the limits toward testable, closed-loop AGI foundations. Run `python adversarial_perturbation.py` in the artifacts dir to simulate. Want to add specific adversary profiles, full pentad propagation, or React integration next? Vive la table!
 
 ## III
-**Jacobian Sensitivity Analysis** has been deeply explored and operationalized in the digital twin. It serves as the **core of the Σ Jacobian** (multi-scale: Individual → Network → Care Systems → Regulators → Planners) and the **forward-pass reaction/update rule** (γ|ε_FGT|² Eigenmode).
+**Jacobian Sensitivity Analysis** has been deeply explored and operationalized in the digital twin. It serves as the **core of the Σ Jacobian** (multi-scale: Individual → Network → Care Systems → Regulators → Planners) and the **forward-pass reaction/update rule** (`γ|ε_FGT|²` Eigenmode).
 
 ### Conceptual Foundation (Ukubona Pentad Alignment)
 The Jacobian **J = ∂f/∂x** approximates how perturbations at one layer (e.g., **sensation θᵗ**) propagate through **attention** (pointing/compressor), **intention** (perturbation/adaptation), **reaction** (error/FGT), to **action** (SGD update to L(θᵗ⁺¹)).
@@ -312,7 +312,7 @@ This pushes the embodied-adversarial loop further toward AGI foundations. Want t
 Vive la table — the loop is tightening.
 
 ## IV
-**Full Epoch Simulation with SGD Update** successfully implemented and executed in `/home/workdir/artifacts/full_epoch_simulation.py`. This closes the complete adversarial-embodied pentad loop (θᵗ → L₀+Σwᵢ·Lᵢ → f(σ²,λ,ε) → γ|ε_FGT|² → L(θᵗ⁺¹)) with Jacobian sensitivity driving the **Reaction** and **SGD-based Action**.
+**Full Epoch Simulation with SGD Update** successfully implemented and executed in `/home/workdir/artifacts/full_epoch_simulation.py`. This closes the complete adversarial-embodied pentad loop (`θᵗ → L₀+Σwᵢ·Lᵢ → f(σ²,λ,ε) → γ|ε_FGT|² → L(θᵗ⁺¹)`) with Jacobian sensitivity driving the **Reaction** and **SGD-based Action**.
 
 ### Epoch Mechanics (Aligned to Framework)
 1. **Sensation (θᵗ, Antiquarian/Nonself)**: Start with healthy embodied base state (high pedigree bias).
@@ -1241,11 +1241,11 @@ Your framework already implicitly distinguishes these.
 
 | Layer     | Conventional AI             | Ukubona                 |
 | --------- | --------------------------- | ----------------------- |
-| θᵗ        | Frozen training corpus      | Living sensation        |
-| L₀+ΣwᵢLᵢ  | Static attention weights    | Dynamic salience        |
-| f(σ²,λ,ε) | Inference                   | Intentional adaptation  |
-| γ|ε_FGT|² | Loss during training only   | Continuous error signal |
-| L(θᵗ⁺¹)   | New checkpoint months later | Immediate self-update   |
+| `θᵗ`        | Frozen training corpus      | Living sensation        |
+| `L₀+ΣwᵢLᵢ`  | Static attention weights    | Dynamic salience        |
+| `f(σ²,λ,ε)` | Inference                   | Intentional adaptation  |
+| `γ|ε_FGT|²` | Loss during training only   | Continuous error signal |
+| `L(θᵗ⁺¹)`   | New checkpoint months later | Immediate self-update   |
 
 The fundamental observation is:
 
@@ -1647,7 +1647,7 @@ The Graph Jacobian introduced by Google was mathematically sound, but it added n
 
 ---
 
-### IV. γ|ε_FGT|² — Eigenmode / Reaction / Error
+### IV. `γ|ε_FGT|²` — Eigenmode / Reaction / Error
 **What strayed:** The FGT (Federated Ground Truth) is the most important concept in the entire framework — OpenAI correctly identified it as the crux — and it is the most completely absent from the code. The `compute_error_fgt` function is:
 
 ```python
